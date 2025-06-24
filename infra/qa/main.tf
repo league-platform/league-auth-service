@@ -6,10 +6,6 @@ terraform {
   backend "local" {}
 }
 
-data "aws_subnet" "selected" {
-  id = var.subnet_id
-}
-
 # 1) EBS volume
 resource "aws_ebs_volume" "mongo_data" {
   availability_zone = var.availability_zone
