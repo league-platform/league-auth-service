@@ -20,15 +20,16 @@ jobs:
     environment: qa
 
     env:
-      TF_VAR_ami:             ${{ secrets.TF_VAR_ami }}
-      TF_VAR_instance_type:   ${{ secrets.TF_VAR_instance_type }}
-      TF_VAR_ebs_size:        ${{ secrets.TF_VAR_ebs_size }}
-      TF_VAR_mongo_root_user: ${{ secrets.TF_VAR_mongo_root_user }}
-      TF_VAR_mongo_root_pass: ${{ secrets.TF_VAR_mongo_root_pass }}
-      TF_VAR_ssh_key_name:    ${{ secrets.TF_VAR_ssh_key_name }}
-      TF_VAR_vpc_id:          ${{ secrets.TF_VAR_vpc_id }}
-      TF_VAR_subnet_id:       ${{ secrets.TF_VAR_subnet_id }}
-      TF_VAR_auth_sg_id:      ${{ secrets.TF_VAR_auth_sg_id }}
+      TF_VAR_aws_region:      ${{ secrets.TF_VAR_AWS_REGION }}
+      TF_VAR_ami:             ${{ secrets.TF_VAR_AMI }}
+      TF_VAR_instance_type:   ${{ secrets.TF_VAR_INSTANCE_TYPE }}
+      TF_VAR_ebs_size:        ${{ secrets.TF_VAR_EBS_SIZE }}
+      TF_VAR_mongo_root_user: ${{ secrets.TF_VAR_MONGO_ROOT_USER }}
+      TF_VAR_mongo_root_pass: ${{ secrets.TF_VAR_MONGO_ROOT_PASS }}
+      TF_VAR_ssh_key_name:    ${{ secrets.TF_VAR_SSH_KEY_NAME }}
+      TF_VAR_vpc_id:          ${{ secrets.TF_VAR_VPC_ID }}
+      TF_VAR_subnet_id:       ${{ secrets.TF_VAR_SUBNET_ID }}
+      TF_VAR_auth_sg_id:      ${{ secrets.TF_VAR_AUTH_SG_ID }}
 
     steps:
       - name: Checkout code
