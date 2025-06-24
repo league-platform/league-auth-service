@@ -3,6 +3,9 @@
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
+const mongoose = require('mongoose');
+const DB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/league-auth';
+
 
 const app = express();
 // Enable Cross-Origin Resource Sharing
@@ -13,6 +16,14 @@ app.use(express.json());
 // Mount authentication routes under /auth
 app.use('/auth', authRoutes);
 
+// Connect to MongoDB
+mongoose.connect(DB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
+  
 // Export the app for testing purposes
 module.exports = app;
 
