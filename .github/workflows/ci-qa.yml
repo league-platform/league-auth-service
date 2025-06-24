@@ -1,0 +1,33 @@
+name: CI QA – {{service-name}}
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install & Test
+        run: npm ci && npm test
+
+      - name: Static Analysis
+        run: npx eslint src
+
+      - name: Build & Push Docker image
+        env:
+          IMAGE: yourdockerhubuser/{{repo-name}}:qa-${{ github.sha }}
+        run: |
+          docker build -t $IMAGE .
+          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u yourdockerhubuser --password-stdin
+          docker push $IMAGE
+
+      - name: Terraform QA Deploy
+        working-directory: infra/qa
+        env:
+          TF_WORKSPACE: qa
+        run: |
+          terraform init -backend-config="workspace=$TF_WORKSPACE"
+          terraform apply -auto-approve
