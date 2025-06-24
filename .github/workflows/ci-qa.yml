@@ -29,6 +29,7 @@ jobs:
       TF_VAR_ssh_key_name:    ${{ secrets.TF_VAR_SSH_KEY_NAME }}
       TF_VAR_vpc_id:          ${{ secrets.TF_VAR_VPC_ID }}
       TF_VAR_subnet_id:       ${{ secrets.TF_VAR_SUBNET_ID }}
+      TF_VAR_availability_zone: ${{ secrets.TF_VAR_AVAILABILITY_ZONE }}
       TF_VAR_auth_sg_id:      ${{ secrets.TF_VAR_AUTH_SG_ID }}
 
     steps:
