@@ -37,8 +37,9 @@ jobs:
       - name: Terraform Init & Apply
         working-directory: infra/qa
         run: |
-          terraform init -backend-config="workspace=qa"
-          terraform apply -auto-approve
+         terraform init
+         terraform workspace select qa || terraform workspace new qa
+         terraform apply -auto-approve
 
       - name: Capture Mongo URI
         id: tf
