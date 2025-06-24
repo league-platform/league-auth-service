@@ -1,3 +1,11 @@
+terraform {
+  backend "local" {}
+}
+
+data "aws_subnet" "selected" {
+  id = var.subnet_id
+}
+
 provider "aws" { region = var.aws_region }
 
 # 1) EBS volume
