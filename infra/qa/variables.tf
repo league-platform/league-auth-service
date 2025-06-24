@@ -22,3 +22,11 @@ variable "auth_sg_id"      { type = string }
 variable "availability_zone" {
   type = string
 }
+
+variable "existing_volume_id" {
+  type = string
+}
+
+variable "existing_sg_id" {
+  type = string
+}
