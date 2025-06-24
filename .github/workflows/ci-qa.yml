@@ -1,0 +1,68 @@
+name: CI QA – league-auth-service
+
+on:
+  push:
+    branches: [ qa ]
+    paths:
+      - 'infra/qa/**'
+      - 'src/**'
+      - '.github/workflows/ci-qa.yml'
+  pull_request:
+    branches: [ qa ]
+    paths:
+      - 'infra/qa/**'
+      - 'src/**'
+      - '.github/workflows/ci-qa.yml'
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    environment: qa
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region:            ${{ secrets.TF_VAR_AWS_REGION }}
+
+      - name: Terraform Init & Apply
+        working-directory: infra/qa
+        run: |
+          terraform init -backend-config="workspace=qa"
+          terraform apply -auto-approve
+
+      - name: Capture Mongo URI
+        id: tf
+        working-directory: infra/qa
+        run: echo "MONGO_URI=$(terraform output -raw mongo_uri)" >> $GITHUB_ENV
+
+      - name: Install, Lint & Test
+        run: |
+          npm ci
+          npm run lint
+          npm test
+
+      - name: Build & Push Docker image
+        env:
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/league-auth-service:qa-${{ github.sha }}
+        run: |
+          docker build -t $IMAGE .
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" \
+            | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          docker push $IMAGE
+
+      - name: Deploy Auth Service to QA
+        run: |
+          docker rm -f auth-qa || true
+          docker run -d \
+            --name auth-qa \
+            -e MONGO_URI=$MONGO_URI \
+            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            -p 3000:3000 \
+            $IMAGE
