@@ -13,10 +13,14 @@ app.use(express.json());
 // Mount authentication routes under /auth
 app.use('/auth', authRoutes);
 
-// Start server on configured port or default 3000
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Auth service running on port ${PORT}`);
-});
-
+// Export the app for testing purposes
 module.exports = app;
+
+// Only start the server if this file is run directly
+if (require.main === module) {
+  // Start server on configured port or default 3000
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Auth service running on port ${PORT}`);
+  });
+}
