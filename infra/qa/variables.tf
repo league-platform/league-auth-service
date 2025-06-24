@@ -18,3 +18,7 @@ variable "ssh_key_name"    { type = string }
 variable "vpc_id"          { type = string }
 variable "subnet_id"       { type = string }
 variable "auth_sg_id"      { type = string }
+
+variable "availability_zone" {
+  type = string
+}

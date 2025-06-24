@@ -12,7 +12,7 @@ data "aws_subnet" "selected" {
 
 # 1) EBS volume
 resource "aws_ebs_volume" "mongo_data" {
-  availability_zone = data.aws_subnet.selected.availability_zone
+  availability_zone = var.availability_zone
   size              = var.ebs_size
   tags = { Name = "mongo-data-qa" }
 }
