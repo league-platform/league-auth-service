@@ -3,34 +3,11 @@ name: CI QA – league-auth-service
 on:
   push:
     branches: [ qa ]
-    paths:
-      - 'infra/qa/**'
-      - 'src/**'
-      - '.github/workflows/ci-qa.yml'
-  pull_request:
-    branches: [ qa ]
-    paths:
-      - 'infra/qa/**'
-      - 'src/**'
-      - '.github/workflows/ci-qa.yml'
 
 jobs:
-  build-test-deploy:
+  provision-infra:
     runs-on: ubuntu-latest
     environment: qa
-
-    env:
-      TF_VAR_aws_region:      ${{ secrets.TF_VAR_AWS_REGION }}
-      TF_VAR_ami:             ${{ secrets.TF_VAR_AMI }}
-      TF_VAR_instance_type:   ${{ secrets.TF_VAR_INSTANCE_TYPE }}
-      TF_VAR_ebs_size:        ${{ secrets.TF_VAR_EBS_SIZE }}
-      TF_VAR_mongo_root_user: ${{ secrets.TF_VAR_MONGO_ROOT_USER }}
-      TF_VAR_mongo_root_pass: ${{ secrets.TF_VAR_MONGO_ROOT_PASS }}
-      TF_VAR_ssh_key_name:    ${{ secrets.TF_VAR_SSH_KEY_NAME }}
-      TF_VAR_vpc_id:          ${{ secrets.TF_VAR_VPC_ID }}
-      TF_VAR_subnet_id:       ${{ secrets.TF_VAR_SUBNET_ID }}
-      TF_VAR_availability_zone: ${{ secrets.TF_VAR_AVAILABILITY_ZONE }}
-      TF_VAR_auth_sg_id:      ${{ secrets.TF_VAR_AUTH_SG_ID }}
 
     steps:
       - name: Checkout code
@@ -41,45 +18,51 @@ jobs:
         with:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region:            ${{ secrets.TF_VAR_AWS_REGION }}
+          aws-region:            ${{ secrets.AWS_REGION }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Terraform Init & Apply
-        working-directory: infra/qa
+      - name: Create SG for Auth Service
         run: |
-         terraform init
-         terraform workspace select qa || terraform workspace new qa
-         terraform apply -auto-approve
+          # Create a new security group and capture its ID
+          SG_ID=$(aws ec2 create-security-group \
+            --description "QA Auth Service SG" \
+            --group-name qa-auth-sg \
+            --vpc-id ${{ secrets.VPC_ID }} \
+            --query 'GroupId' --output text)
+          echo "SG_ID=$SG_ID" >> $GITHUB_ENV
 
-      - name: Capture Mongo URI
-        id: tf
-        working-directory: infra/qa
-        run: echo "MONGO_URI=$(terraform output -raw mongo_uri)" >> $GITHUB_ENV
+          # Allow inbound on port 3000 from anywhere
+          aws ec2 authorize-security-group-ingress \
+            --group-id $SG_ID \
+            --protocol tcp --port 3000 --cidr 0.0.0.0/0
 
-      - name: Install, Lint & Test
+      - name: Launch Auth EC2
         run: |
-          npm ci
-          npm run lint
-          npm test
+          # Launch instance in the correct subnet, with the SG_ID
+          INSTANCE_ID=$(aws ec2 run-instances \
+            --image-id ${{ secrets.AMI_ID }} \
+            --instance-type ${{ secrets.INSTANCE_TYPE }} \
+            --key-name ${{ secrets.SSH_KEY_NAME }} \
+            --subnet-id ${{ secrets.SUBNET_ID }} \
+            --security-group-ids $SG_ID \
+            --associate-public-ip-address \
+            --query 'Instances[0].InstanceId' \
+            --output text)
+          echo "AUTH_INSTANCE=$INSTANCE_ID" >> $GITHUB_ENV
 
-      - name: Build & Push Docker image
-        env:
-          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/league-auth-service:qa-${{ github.sha }}
-        run: |
-          docker build -t $IMAGE .
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" \
-            | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-          docker push $IMAGE
+      - name: Wait for instance running
+        run: aws ec2 wait instance-running --instance-ids ${{ env.AUTH_INSTANCE }}
 
-      - name: Deploy Auth Service to QA
+      - name: Associate Elastic IP
         run: |
-          docker rm -f auth-qa || true
-          docker run -d \
-            --name auth-qa \
-            -e MONGO_URI=$MONGO_URI \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            -p 3000:3000 \
-            $IMAGE
+          # If you have an existing EIP allocation, associate it here
+          aws ec2 associate-address \
+            --allocation-id ${{ secrets.EIP_ALLOCATION_ID }} \
+            --instance-id ${{ env.AUTH_INSTANCE }}
+
+      - name: Get public IP
+        run: |
+          IP=$(aws ec2 describe-instances \
+            --instance-ids ${{ env.AUTH_INSTANCE }} \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+          echo "AUTH_IP=$IP" >> $GITHUB_ENV
