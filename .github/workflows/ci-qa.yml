@@ -1,9 +1,14 @@
 name: CI QA – league-auth-service
 
-# Run on pushes to main where QA infra, code or this workflow changes
 on:
   push:
-    branches: [ main ]
+    branches: [ qa ]
+    paths:
+      - 'infra/qa/**'
+      - 'src/**'
+      - '.github/workflows/ci-qa.yml'
+  pull_request:
+    branches: [ qa ]
     paths:
       - 'infra/qa/**'
       - 'src/**'
@@ -12,14 +17,12 @@ on:
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
-    environment: qa  # use the qa environment for secrets
+    environment: qa
 
     steps:
-      # 1. Check out the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Configure AWS credentials (temporary IAM from AWS Academy)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -28,36 +31,32 @@ jobs:
           aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region:            ${{ secrets.TF_VAR_AWS_REGION }}
 
-      # 3. Initialize and apply Terraform in infra/qa
       - name: Terraform Init & Apply
         working-directory: infra/qa
         run: |
           terraform init -backend-config="workspace=qa"
           terraform apply -auto-approve
 
-      # 4. Capture the MongoDB URI output from Terraform
       - name: Capture Mongo URI
         id: tf
         working-directory: infra/qa
         run: echo "MONGO_URI=$(terraform output -raw mongo_uri)" >> $GITHUB_ENV
 
-      # 5. Install dependencies, lint and run tests
       - name: Install, Lint & Test
         run: |
           npm ci
           npm run lint
           npm test
 
-      # 6. Build Docker image and push to Docker Hub (QA tag)
       - name: Build & Push Docker image
         env:
           IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/league-auth-service:qa-${{ github.sha }}
         run: |
           docker build -t $IMAGE .
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" \
+            | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
           docker push $IMAGE
 
-      # 7. Deploy the Auth Service container on QA EC2
       - name: Deploy Auth Service to QA
         run: |
           docker rm -f auth-qa || true
