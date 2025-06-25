@@ -21,9 +21,9 @@ jobs:
 
            # Write SSH private key preserving line breaks using heredoc
           cat <<EOF > ~/.ssh/id_rsa
-          ${{ secrets.EC2_SSH_KEY }}
+            ${{ secrets.EC2_SSH_KEY }}
           EOF
-          
+
           chmod 600 ~/.ssh/id_rsa
           # Add EC2 host to known_hosts
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
