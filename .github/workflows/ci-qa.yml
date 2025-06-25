@@ -19,20 +19,20 @@ jobs:
         run: |
           mkdir -p ~/.ssh
 
-          # Use echo con EOF para evitar escapes indeseados
-          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem.raw
+          # Write SSH private key preserving line breaks using printf
           printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-
           chmod 600 ~/.ssh/id_rsa
+
+          # Add EC2 host to known_hosts to skip SSH prompts
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
           echo "✅ SSH key written successfully"
 
-      # Deploy the app to EC2 and run it with PM2
+      # Deploy the app to EC2 and start the microservice using PM2
       - name: Deploy to EC2 and start microservice
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cd /home/ec2-user
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            cd /home/${{ secrets.EC2_USER }}
 
             # Clone or update the repository
             if [ -d league-auth-service ]; then
@@ -43,21 +43,21 @@ jobs:
               cd league-auth-service
             fi
 
-            # Create .env file with sensitive environment variables
+            # Create .env file with secrets
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "PORT=3000" >> .env
 
-            # Install Node.js if not already installed
+            # Install Node.js if not available
             if ! command -v node &> /dev/null; then
               curl -sL https://rpm.nodesource.com/setup_18.x | bash -
               yum install -y nodejs
             fi
 
-            # Install dependencies
+            # Install project dependencies
             npm install
 
-            # Install and configure PM2 to run the service
+            # Install PM2 and start the service
             npm install -g pm2
             pm2 start index.js --name auth-service || pm2 restart auth-service
             pm2 save
