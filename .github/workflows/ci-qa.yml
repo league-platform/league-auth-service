@@ -17,13 +17,16 @@ jobs:
       # Configure SSH access to EC2
       - name: Setup SSH
         run: |
-          bash -c "mkdir -p ~/.ssh && \
-          cat > ~/.ssh/id_rsa <<'EOKEY'
-          ${{ secrets.EC2_SSH_KEY }}
-          EOKEY
-          chmod 600 ~/.ssh/id_rsa && \
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts && \
-          echo '✅ SSH key written successfully'"
+          mkdir -p ~/.ssh
+
+          # Use echo con EOF para evitar escapes indeseados
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem.raw
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+          echo "✅ SSH key written successfully"
 
       # Deploy the app to EC2 and run it with PM2
       - name: Deploy to EC2 and start microservice
