@@ -19,11 +19,13 @@ jobs:
         run: |
           mkdir -p ~/.ssh
 
-          # Save EC2_SSH_KEY as a real PEM file preserving line breaks
-          printf "%s\n" "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+           # Write SSH private key preserving line breaks using heredoc
+          cat <<EOF > ~/.ssh/id_rsa
+          ${{ secrets.EC2_SSH_KEY }}
+          EOF
+          
           chmod 600 ~/.ssh/id_rsa
-
-          # Add EC2 host to known_hosts to avoid prompt
+          # Add EC2 host to known_hosts
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       # Deploy the app to EC2 and run it with PM2
