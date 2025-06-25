@@ -20,7 +20,7 @@ jobs:
           mkdir -p ~/.ssh
 
           # Save EC2 SSH key preserving newlines
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          printf "%s\n" "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
           # Add EC2 host to known_hosts
