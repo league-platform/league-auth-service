@@ -19,11 +19,12 @@ jobs:
         run: |
           mkdir -p ~/.ssh
 
-          # Write SSH private key preserving line breaks using printf
-          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          # Write SSH private key preserving exact formatting
+          cat > ~/.ssh/id_rsa << 'EOF'
+          ${{ secrets.EC2_SSH_KEY }}
+          EOF
 
-          # Add EC2 host to known_hosts to skip SSH prompts
+          chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
           echo "✅ SSH key written successfully"
