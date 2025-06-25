@@ -42,7 +42,8 @@ jobs:
             fi
 
             npm install
-            npm install -g pm2
+            sudo npm install -g pm2
             pm2 start index.js --name auth-service || pm2 restart auth-service
             pm2 save
-            pm2 startup | tail -n 1 | bash
+            sudo su -c "env PATH=$PATH:/usr/bin pm2 startup systemd -u ec2-user --hp /home/ec2-user"
+
