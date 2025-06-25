@@ -7,7 +7,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 
-console.log('🧪 MONGO_URI from .env:', process.env.MONGO_URI);
+console.log('🧪 MONGO_URI from .env:', process.env.MONGO_URI); 
 
 const DB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/league-auth';
 console.log('📦 Connecting to:', DB_URI);
