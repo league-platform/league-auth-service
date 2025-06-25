@@ -10,7 +10,7 @@
     router.post('/logout', logout);
     // Health check endpoint to verify the service is up and running
     router.get('/ping', (req, res) => {
-    res.json({ message: 'pong', status: 'ok' });
+    res.json({ message: 'pong!', status: 'ok' });
     });
 
     module.exports = router;
