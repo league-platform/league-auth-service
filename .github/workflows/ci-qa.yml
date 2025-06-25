@@ -53,6 +53,3 @@ jobs:
             pm2 start src/index.js --name auth-service
             pm2 save
             pm2 startup systemd -u $USER --hp /home/$USER || true
-
-
-
