@@ -19,14 +19,14 @@ jobs:
         run: |
           mkdir -p ~/.ssh
 
-          # Write SSH private key preserving line breaks using heredoc
-          cat <<EOF > ~/.ssh/id_rsa
-${{ secrets.EC2_SSH_KEY }}
-EOF
-          
+          # Save EC2 SSH key preserving newlines
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+
           # Add EC2 host to known_hosts
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+          echo "✅ SSH key written successfully"
 
       # Deploy the app to EC2 and run it with PM2
       - name: Deploy to EC2 and start microservice
@@ -45,10 +45,10 @@ EOF
 
             # Create .env file with sensitive environment variables
             cat <<EOT > .env
-MONGO_URI=${{ secrets.MONGO_URI }}
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-PORT=3000
-EOT
+            MONGO_URI=${{ secrets.MONGO_URI }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PORT=3000
+            EOT
 
             # Install Node.js if not already installed
             if ! command -v node &> /dev/null; then
