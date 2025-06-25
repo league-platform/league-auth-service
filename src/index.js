@@ -1,4 +1,6 @@
 // Entry point for the Authentication microservice
+require('dotenv').config(); // Load variables from .env file
+
 // Sets up Express, CORS, JSON parsing, and mounts auth routes
 const express = require('express');
 const cors = require('cors');
