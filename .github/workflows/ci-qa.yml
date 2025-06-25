@@ -24,7 +24,7 @@ jobs:
           script: |
             cd /home/${{ secrets.EC2_USER }}
 
-            # Clonación con token privado si el repo es privado
+            # Clone with private token if the repo is private
             if [ -d league-auth-service ]; then
               cd league-auth-service
               git reset --hard
@@ -37,22 +37,22 @@ jobs:
               cd league-auth-service
             fi
 
-            # Variables de entorno
+            # Environment variables
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "PORT=3000" >> .env
 
-            # Instalar Node.js con permisos
+            # Install Node.js with permissions
             if ! command -v node &> /dev/null; then
               curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
               sudo yum install -y nodejs
             fi
 
-            # Instalar dependencias y PM2
+            # Install dependencies and PM2
             npm install
             sudo npm install -g pm2
 
-            # Ejecutar app con PM2
+            # Run app with PM2
             cd /home/${{ secrets.EC2_USER }}/league-auth-service
             pm2 delete auth-service || true
             pm2 start src/index.js --name auth-service
