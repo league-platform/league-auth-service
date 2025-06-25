@@ -27,12 +27,12 @@ jobs:
             # Clonación con token privado si el repo es privado
             if [ -d league-auth-service ]; then
               cd league-auth-service
-              git pull
+              git fetch origin
               git checkout qa
+              git reset --hard origin/qa
             else
-              git clone https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/league-platform/league-auth-service.git
+              git clone --branch qa https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/league-platform/league-auth-service.git
               cd league-auth-service
-              git checkout qa
             fi
 
             # Variables de entorno
