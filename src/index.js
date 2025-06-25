@@ -4,8 +4,11 @@ require('dotenv').config(); // Load variables from .env file
 // Sets up Express, CORS, JSON parsing, and mounts auth routes
 const express = require('express');
 const cors = require('cors');
-const authRoutes = require('./routes/auth');
 const mongoose = require('mongoose');
+const authRoutes = require('./routes/auth');
+
+console.log('🧪 MONGO_URI from .env:', process.env.MONGO_URI);
+
 const DB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/league-auth';
 console.log('📦 Connecting to:', DB_URI);
 
