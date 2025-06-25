@@ -8,7 +8,6 @@ const authRoutes = require('./routes/auth');
 const mongoose = require('mongoose');
 const DB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/league-auth';
 
-
 const app = express();
 // Enable Cross-Origin Resource Sharing
 app.use(cors()); 
