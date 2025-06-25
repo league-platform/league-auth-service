@@ -28,9 +28,11 @@ jobs:
             if [ -d league-auth-service ]; then
               cd league-auth-service
               git pull
+              git checkout qa
             else
               git clone https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/league-platform/league-auth-service.git
               cd league-auth-service
+              git checkout qa
             fi
 
             # Variables de entorno
