@@ -27,6 +27,8 @@ jobs:
             # Clonación con token privado si el repo es privado
             if [ -d league-auth-service ]; then
               cd league-auth-service
+              git reset --hard
+              git clean -fd
               git fetch origin
               git checkout qa
               git reset --hard origin/qa
