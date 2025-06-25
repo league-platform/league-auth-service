@@ -50,6 +50,7 @@ jobs:
 
             # Ejecutar app con PM2
             cd /home/${{ secrets.EC2_USER }}/league-auth-service
+            pm2 delete auth-service || true
             pm2 start src/index.js --name auth-service
             pm2 save
             pm2 startup systemd -u $USER --hp /home/$USER >/dev/null 2>&1 || true
