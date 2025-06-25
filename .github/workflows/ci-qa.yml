@@ -2,68 +2,60 @@ name: CI QA – league-auth-service
 
 on:
   push:
-    branches: [ qa ]
+    branches: [qa]
 
 jobs:
-  provision-infra:
+  deploy:
     runs-on: ubuntu-latest
     environment: qa
 
     steps:
-      - name: Checkout code
+      # Checkout the repository code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token:     ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region:            ${{ secrets.AWS_REGION }}
-
-      - name: Create SG for Auth Service
+      # Configure SSH access to EC2
+      - name: Setup SSH
         run: |
-          # Create a new security group and capture its ID
-          SG_ID=$(aws ec2 create-security-group \
-            --description "QA Auth Service SG" \
-            --group-name qa-auth-sg \
-            --vpc-id ${{ secrets.VPC_ID }} \
-            --query 'GroupId' --output text)
-          echo "SG_ID=$SG_ID" >> $GITHUB_ENV
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-          # Allow inbound on port 3000 from anywhere
-          aws ec2 authorize-security-group-ingress \
-            --group-id $SG_ID \
-            --protocol tcp --port 3000 --cidr 0.0.0.0/0
-
-      - name: Launch Auth EC2
+      # Deploy the app to EC2 and run it with PM2
+      - name: Deploy to EC2 and start microservice
         run: |
-          # Launch instance in the correct subnet, with the SG_ID
-          INSTANCE_ID=$(aws ec2 run-instances \
-            --image-id ${{ secrets.AMI_ID }} \
-            --instance-type ${{ secrets.INSTANCE_TYPE }} \
-            --key-name ${{ secrets.SSH_KEY_NAME }} \
-            --subnet-id ${{ secrets.SUBNET_ID }} \
-            --security-group-ids $SG_ID \
-            --associate-public-ip-address \
-            --query 'Instances[0].InstanceId' \
-            --output text)
-          echo "AUTH_INSTANCE=$INSTANCE_ID" >> $GITHUB_ENV
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ec2-user
 
-      - name: Wait for instance running
-        run: aws ec2 wait instance-running --instance-ids ${{ env.AUTH_INSTANCE }}
+            # Clone or update the repository
+            if [ -d league-auth-service ]; then
+              cd league-auth-service
+              git pull
+            else
+              git clone https://github.com/league-platform/league-auth-service.git
+              cd league-auth-service
+            fi
 
-      - name: Associate Elastic IP
-        run: |
-          # If you have an existing EIP allocation, associate it here
-          aws ec2 associate-address \
-            --allocation-id ${{ secrets.EIP_ALLOCATION_ID }} \
-            --instance-id ${{ env.AUTH_INSTANCE }}
+            # Create .env file with sensitive environment variables
+            cat <<EOT > .env
+            MONGO_URI=${{ secrets.MONGO_URI }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PORT=3000
+            EOT
 
-      - name: Get public IP
-        run: |
-          IP=$(aws ec2 describe-instances \
-            --instance-ids ${{ env.AUTH_INSTANCE }} \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text)
-          echo "AUTH_IP=$IP" >> $GITHUB_ENV
+            # Install Node.js if not already installed
+            if ! command -v node &> /dev/null; then
+              curl -sL https://rpm.nodesource.com/setup_18.x | bash -
+              yum install -y nodejs
+            fi
+
+            # Install dependencies
+            npm install
+
+            # Install and configure PM2 to run the service
+            npm install -g pm2
+            pm2 start index.js --name auth-service || pm2 restart auth-service
+            pm2 save
+            pm2 startup | tail -n 1 | bash
+          EOF

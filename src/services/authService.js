@@ -37,7 +37,7 @@ async function authenticateUser(email, password) {
     err.status = 401;
     throw err;
   }
-  const token = signToken({ userId: user._id });
+  const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES_IN });
   return { token, expiresIn: process.env.JWT_EXPIRATION || '1h' };
 }
 /**

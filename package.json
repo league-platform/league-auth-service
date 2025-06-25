@@ -1,9 +1,9 @@
 {
   "scripts": {
     "prepare": "husky install",
-    "start":   "node src/index.js",
-    "test":    "jest --runInBand",
-    "lint":    "npx eslint src"
+    "start": "node src/index.js",
+    "test": "jest --runInBand",
+    "lint": "npx eslint src"
   },
   "jest": {
     "testEnvironment": "node",
@@ -15,17 +15,18 @@
     ]
   },
   "devDependencies": {
-    "@commitlint/cli":               "^17.0.0",
-    "@commitlint/config-conventional":"^17.0.0",
-    "eslint":                        "^8.57.1",
-    "husky":                         "^8.0.0",
-    "jest":                          "^30.0.2",
-    "supertest":                     "^7.1.1"
+    "@commitlint/cli": "^17.0.0",
+    "@commitlint/config-conventional": "^17.0.0",
+    "eslint": "^8.57.1",
+    "husky": "^8.0.0",
+    "jest": "^30.0.2",
+    "supertest": "^7.1.1"
   },
   "dependencies": {
-    "bcrypt":       "^6.0.0",
-    "cors":         "^2.8.5",
-    "express":      "^5.1.0",
-    "jsonwebtoken": "^9.0.2"
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.0"
   }
 }

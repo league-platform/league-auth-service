@@ -1,7 +1,7 @@
-// src/__tests__/auth.test.js
 const request = require('supertest');
 const app = require('../index');
 
+jest.setTimeout(20000);
 describe('Auth Service Endpoints', () => {
   let accessToken;
 
