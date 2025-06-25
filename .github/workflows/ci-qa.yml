@@ -16,13 +16,11 @@ jobs:
 
       # Configure SSH access to EC2
       - name: Setup SSH
-        env:
-          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
 
-          # Safely write SSH key using environment expansion
-          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          # Write the SSH key line-by-line using safe expansion
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
