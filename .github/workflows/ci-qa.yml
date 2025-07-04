@@ -30,7 +30,7 @@ jobs:
               git checkout qa
               git reset --hard origin/qa
             else
-              git clone --branch qa https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/league-platform/league-auth-service.git
+              git clone --branch qa https://github.com/league-platform/league-auth-service.git
               cd league-auth-service
             fi
 
