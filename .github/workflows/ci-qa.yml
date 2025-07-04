@@ -10,11 +10,9 @@ jobs:
     environment: qa
 
     steps:
-      # Checkout the repository code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Deploy the app to EC2 using appleboy SSH action
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -24,7 +22,6 @@ jobs:
           script: |
             cd /home/${{ secrets.EC2_USER }}
 
-            # Clone with private token if the repo is private
             if [ -d league-auth-service ]; then
               cd league-auth-service
               git reset --hard
@@ -37,24 +34,18 @@ jobs:
               cd league-auth-service
             fi
 
-            # Environment variables
+            # Crear .env con variables
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "PORT=3000" >> .env
 
-            # Install Node.js with permissions
-            if ! command -v node &> /dev/null; then
-              curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-              sudo yum install -y nodejs
-            fi
-
-            # Install dependencies and PM2
-            npm install
-            sudo npm install -g pm2
-
-            # Run app with PM2
-            cd /home/${{ secrets.EC2_USER }}/league-auth-service
-            pm2 delete auth-service || true
-            pm2 start src/index.js --name auth-service
-            pm2 save
-            pm2 startup systemd -u $USER --hp /home/$USER >/dev/null 2>&1 || true
+            # Construir y correr el contenedor
+            docker stop league-auth-service || true
+            docker rm league-auth-service || true
+            docker build -t league-auth-service .
+            docker run -d \
+              --name league-auth-service \
+              --env-file .env \
+              -p 3000:3000 \
+              --restart unless-stopped \
+              league-auth-service
