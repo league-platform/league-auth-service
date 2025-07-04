@@ -22,17 +22,10 @@ jobs:
           script: |
             cd /home/${{ secrets.EC2_USER }}
 
-            if [ -d league-auth-service ]; then
-              cd league-auth-service
-              git reset --hard
-              git clean -fd
-              git fetch origin
-              git checkout qa
-              git reset --hard origin/qa
-            else
-              git clone --branch qa https://github.com/league-platform/league-auth-service.git
-              cd league-auth-service
-            fi
+            # Clon limpio del repo
+            rm -rf league-auth-service
+            git clone --branch qa https://github.com/league-platform/league-auth-service.git
+            cd league-auth-service
 
             # Crear .env con variables
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
