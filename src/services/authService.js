@@ -2,11 +2,13 @@
 const bcrypt = require('bcrypt');
 const User   = require('../models/user');
 const { signToken } = require('../utils/jwt');
+const jwt = require('jsonwebtoken');
 
 // In-memory store for users (replace with a persistent DB in production)
 const users = new Map();
 // Default token expiration (1 hour)
-const TOKEN_EXPIRATION = process.env.JWT_EXPIRATION || '1h';
+const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
+const TOKEN_EXPIRES_IN = process.env.JWT_EXPIRATION || '1h';
 
 /**
  * Register a new user
@@ -37,9 +39,12 @@ async function authenticateUser(email, password) {
     err.status = 401;
     throw err;
   }
+
   const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES_IN });
-  return { token, expiresIn: process.env.JWT_EXPIRATION || '1h' };
+  return { token, expiresIn: TOKEN_EXPIRES_IN };
 }
+
+
 /**
  * Invalidate a token (stub for blacklist logic)
  */
