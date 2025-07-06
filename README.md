@@ -1,41 +1,69 @@
-# league-service-template
-Template-based microservice for the League platform.
+# league-auth-service
+
+Authentication microservice for the League platform.
 
 ## Table of Contents
 
 - [Description](#description)
+- [Architecture Used](#architecture-used)
+- [Design Principles and Patterns](#design-principles-and-patterns)
 - [Prerequisites](#prerequisites)
 - [Setup](#setup)
 - [Project Structure](#project-structure)
 - [Available Scripts](#available-scripts)
-  - [Local Development](#local-development)
-  - [Testing](#testing)
-  - [Static Analysis](#static-analysis)
-  - [Docker](#docker)
-  - [Deploy to QA](#deploy-to-qa)
 - [Conventional Commits](#conventional-commits)
 - [Contributing](#contributing)
 - [License](#license)
 
+---
+
 ## Description
 
-This repository is a **template** for all League microservices.  
-It includes:
+This repository contains the **authentication microservice** built with Node.js and Express, using MongoDB as the database. It is based on a standardized template used across the League platform.
 
-- Basic folder layout (`src/`, `infra/qa/`, etc.)  
-- `Dockerfile` and `.dockerignore`  
-- GitHub Actions CI pipeline for QA  
-- Terraform scaffold for deploying to QA  
-- Husky + Commitlint setup for Conventional Commits  
+Features:
+
+- Modular structure (controllers, services, routes)
+- Production-ready `Dockerfile`
+- CI/CD pipeline with GitHub Actions
+- Environment variable support via `.env`
+- Basic automated tests
+
+---
+
+## Architecture Used
+
+The project follows a **microservice-based architecture** with the following characteristics:
+
+- **REST API**: communication via HTTP endpoints
+- **Dockerized**: runs in isolated containers
+- **CI/CD**: automated deployment using GitHub Actions
+- **DevOps in AWS**: hosted on EC2 with MongoDB in a separate instance
+- **Infrastructure-as-Code**: Terraform support (in progress)
+
+---
+
+## Design Principles and Patterns
+
+This service applies multiple clean code principles:
+
+- **SOLID**: especially the Single Responsibility Principle — controllers, services, and models are separated.
+- **DRY (Don’t Repeat Yourself)**: shared logic (e.g., JWT handling) is abstracted into utilities.
+- **KISS (Keep It Simple, Stupid)**: clean, readable and maintainable code.
+- **YAGNI (You Aren’t Gonna Need It)**: only implements what's currently required.
+
+---
 
 ## Prerequisites
 
-Make sure you have installed:
+Ensure the following are installed:
 
-- [Node.js](https://nodejs.org/) v18 or higher  
-- [npm](https://docs.npmjs.com/cli/v9/commands/npm) (comes with Node.js)  
-- [Terraform CLI](https://developer.hashicorp.com/terraform)  
-- [Docker](https://www.docker.com/)  
+- [Node.js](https://nodejs.org/) v18+
+- [npm](https://www.npmjs.com/)
+- [Docker](https://www.docker.com/)
+- [Terraform CLI](https://developer.hashicorp.com/terraform)
+
+---
 
 ## Setup
 
@@ -67,5 +95,7 @@ This template enforces Conventional Commits via Husky and Commitlint.
 
 git commit -m "feat(auth): add signup endpoint"
 git commit -m "fix(ci): correct Dockerfile path for QA deploy"
+
+
 
 

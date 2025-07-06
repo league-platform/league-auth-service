@@ -1,33 +1,44 @@
-name: CI QA – {{service-name}}
+name: CI QA – league-auth-service
 
 on:
-  pull_request:
-    branches: [ main ]
+  push:
+    branches: [qa]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
+    environment: qa
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Install & Test
-        run: npm ci && npm test
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.EC2_USER }}
 
-      - name: Static Analysis
-        run: npx eslint src
+            # Clon limpio del repo
+            rm -rf league-auth-service
+            git clone --branch qa https://github.com/league-platform/league-auth-service.git
+            cd league-auth-service
 
-      - name: Build & Push Docker image
-        env:
-          IMAGE: yourdockerhubuser/{{repo-name}}:qa-${{ github.sha }}
-        run: |
-          docker build -t $IMAGE .
-          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u yourdockerhubuser --password-stdin
-          docker push $IMAGE
+            # Crear .env con variables
+            echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "PORT=3000" >> .env
 
-      - name: Terraform QA Deploy
-        working-directory: infra/qa
-        env:
-          TF_WORKSPACE: qa
-        run: |
-          terraform init -backend-config="workspace=$TF_WORKSPACE"
-          terraform apply -auto-approve
+            # Construir y correr el contenedor
+            docker stop league-auth-service || true
+            docker rm league-auth-service || true
+            docker build -t league-auth-service .
+            docker run -d \
+              --name league-auth-service \
+              --env-file .env \
+              -p 3000:3000 \
+              --restart unless-stopped \
+              league-auth-service
